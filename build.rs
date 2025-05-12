@@ -29,7 +29,7 @@ fn main() {
 
 fn run() -> Result<(), Box<dyn Error>> {
     #[cfg(feature = "bundled")]
-    llvm_bundler_rs::bundle_cache()?;
+    llvm_bundler_rs::bundler::bundle_cache()?;
 
     let version = llvm_config("--version")?;
 
@@ -87,8 +87,10 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn build_c_library() -> Result<(), Box<dyn Error>> {
+    unsafe { env::set_var("CXXFLAGS", llvm_config("--cxxflags")?) };
+    unsafe { env::set_var("CFLAGS", llvm_config("--cflags")?) };
+
     cc::Build::new()
-        .compiler("clang")
         .cpp(true)
         .files(
             read_dir("cc/lib")?
@@ -97,11 +99,11 @@ fn build_c_library() -> Result<(), Box<dyn Error>> {
                 .map(|entry| entry.path())
                 .filter(|path| path.is_file() && path.extension() == Some(OsStr::new("cpp"))),
         )
-        .include(llvm_config("--includedir")?)
         .include("cc/include")
-        .opt_level(3)
+        .include(llvm_config("--includedir")?)
         .flag("-Werror")
         .std("c++17")
+        .opt_level(3)
         .compile("CTableGen");
 
     Ok(())
