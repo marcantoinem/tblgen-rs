@@ -123,21 +123,28 @@ fn llvm_config(argument: &str) -> Result<String, Box<dyn Error>> {
     let prefix = env::var(format!("TABLEGEN_{}0_PREFIX", LLVM_MAJOR_VERSION))
         .map(|path| Path::new(&path).join("bin"))
         .unwrap_or_default();
-    let call = format!(
-        "{} --link-static {argument}",
-        prefix.join("llvm-config").display()
-    );
 
-    Ok(str::from_utf8(
-        &if cfg!(target_os = "windows") {
-            Command::new("cmd").args(["/C", &call]).output()?
-        } else {
-            Command::new("sh").arg("-c").arg(&call).output()?
-        }
-        .stdout,
-    )?
-    .trim()
-    .to_string())
+    let llvm_config_exe = if cfg!(target_os = "windows") {
+        "llvm-config.exe"
+    } else {
+        "llvm-config"
+    };
+
+    let path = prefix.join(llvm_config_exe);
+
+    let output = Command::new(path)
+        .arg("--link-static")
+        .arg(argument)
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = output.stderr;
+        eprintln!("{}", str::from_utf8(&stderr)?.trim().to_owned());
+        exit(1);
+    }
+
+    let stdout = output.stdout;
+    Ok(str::from_utf8(&stdout)?.trim().to_string())
 }
 
 fn parse_library_name(name: &str) -> Result<&str, String> {
