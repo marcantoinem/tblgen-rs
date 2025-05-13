@@ -77,6 +77,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     bindgen::builder()
         .header("wrapper.h")
         .clang_arg("-Icc/include")
+        .clang_arg("-I/usr/include")
         .clang_arg(format!("-I{}", llvm_config("--includedir")?))
         .default_enum_style(bindgen::EnumVariation::ModuleConsts)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
@@ -100,6 +101,7 @@ fn build_c_library() -> Result<(), Box<dyn Error>> {
                 .filter(|path| path.is_file() && path.extension() == Some(OsStr::new("cpp"))),
         )
         .include("cc/include")
+        .include("/usr/include")
         .include(llvm_config("--includedir")?)
         .flag("-Werror")
         .std("c++17")
