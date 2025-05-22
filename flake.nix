@@ -27,12 +27,6 @@
           ];
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.openssl ];
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-          CXXFLAGS = ''
-              -I${pkgs.llvmPackages_20.libcxx.dev}/include/c++/v1
-            '';
-            LDFLAGS = ''
-              -L${pkgs.llvmPackages_20.libcxx.dev}/lib
-            '';
         };
       });
 }
